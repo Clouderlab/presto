@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 public class Word {
 	private String word;
 	// 音标
@@ -37,6 +40,8 @@ public class Word {
 	private String auxMeaning = "";
 	// 数字 num.
 	private String numMeaning = "";
+	// 其他
+	private String otherMeaning = "";
 	// 属于类型 CET4 CET6
 	private List<String> categories = new ArrayList<String>();
 	// 词根信息
@@ -56,6 +61,14 @@ public class Word {
 	// 例句另外再抓
 	public String getWord() {
 		return word;
+	}
+
+	public String toString() {
+		GsonBuilder builder = new GsonBuilder();
+		builder.disableHtmlEscaping();
+		// builder.setPrettyPrinting();
+		Gson gson = builder.create();
+		return gson.toJson(this);
 	}
 
 	public void setMeaning(String type, String value) throws Exception {
@@ -89,8 +102,18 @@ public class Word {
 		} else if (t.equals("num.")) {
 			this.setNumMeaning(value);
 		} else {
-			throw new Exception("Unrecognized type:" + type);
+			this.setOtherMeaning(this.getOtherMeaning() + type + " " + value);
+			System.out.println("Unrecognized type:" + type);
+			// throw new Exception("Unrecognized type:" + type);
 		}
+	}
+
+	public String getOtherMeaning() {
+		return otherMeaning;
+	}
+
+	public void setOtherMeaning(String otherMeaning) {
+		this.otherMeaning = otherMeaning;
 	}
 
 	public String getvMeaning() {

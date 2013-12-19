@@ -22,9 +22,10 @@ public class ICibaQuery {
 
 	public static void main(String[] args) throws Exception {
 		ICibaQuery q = new ICibaQuery();
-		Word query = q.Query("express");
+		Word query = q.Query("TV");
+		System.out.println(q.gson.toJson(query));
 		DB db = new DB();
-		db.insertWord(query);
+		// db.insertWord(query);
 	}
 
 	public ICibaQuery() {
@@ -34,20 +35,40 @@ public class ICibaQuery {
 		gson = builder.create();
 	}
 
-	public Word Query(String word) throws Exception {
-		// Document parse = Jsoup
-		// .parse(new URL("http://www.iciba.com/" + word), 0);
-		String url = "http://www.iciba.com/" + word;
-		InputStream input = new URL(url).openStream();
-		Document parse = Jsoup.parse(input, "UTF-8", url);
+	public Word Query(String word, int cnt) throws Exception {
+		Document parse = null;
+		try {
+			// 两秒超时如果超时重新执行
+			parse = Jsoup.parse(new URL("http://www.iciba.com/" + word), 5000);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			if (cnt > 5) {
+				System.out.println(word + " failed too many times, jump it!");
+				return null;
+			}
+			// 等待2秒
+			Thread.sleep(2000);
+			e.printStackTrace();
+			System.out.println(word + " reexecution try number:" + cnt++);
+			return this.Query(word, cnt);
+
+		}
+		// String url = "http://www.iciba.com/" + word;
+		// InputStream input = new URL(url).openStream();
+		// Document parse = Jsoup.parse(input, "UTF-8", url);
 
 		Word rt = new Word();
 		this.getMeanings(rt, parse);
 		this.getOtherTypeAndDeritives(rt, parse);
 		this.getWordRoot(rt, parse);
 		this.getSameAndOppositeMean(rt, parse);
-		System.out.println(gson.toJson(rt));
+		// System.out.println(gson.toJson(rt));
 		return rt;
+	}
+
+	public Word Query(String word) throws Exception {
+		return this.Query(word, 1);
 	}
 
 	private void getSameAndOppositeMean(Word word, Document parse) {
@@ -101,8 +122,8 @@ public class ICibaQuery {
 			Element element = li.select("a").get(0);
 			if (element.text().toLowerCase().equals(word.getWord())) {
 				Element mean = li.select("span").get(0);
-				word.setRootExplain(mean.html().replaceAll("\\(", "")
-						.replaceAll("\\)", ""));
+				word.setRootExplain((mean.html().replaceAll("\\(", "")
+						.replaceAll("\\)", "")));
 				break;
 			}
 		}
@@ -126,7 +147,7 @@ public class ICibaQuery {
 				for (Element li : select) {
 					word.getDerivative().add(li.text());
 				}
-			} else {
+			} else if (!ul.text().contains("大家都在背")) {
 				Elements lis = ul.select("li");
 				for (Element li : lis) {
 					String result = li.text().replaceAll("\\s", "")
@@ -160,10 +181,12 @@ public class ICibaQuery {
 		}
 		// 找到种类
 		Elements gen = parse.select("div[class=wd_genre]");
-		Elements elementsByTag = gen.get(0).getElementsByTag("a");
-		for (int i = 0; i < elementsByTag.size(); i++) {
-			word.getCategories().add(
-					elementsByTag.get(i).text().replaceAll("\\s", ""));
+		if (gen.size() > 0) {
+			Elements elementsByTag = gen.get(0).getElementsByTag("a");
+			for (int i = 0; i < elementsByTag.size(); i++) {
+				word.getCategories().add(
+						elementsByTag.get(i).text().replaceAll("\\s", ""));
+			}
 		}
 		// 找到meaning
 		Elements means = parse
