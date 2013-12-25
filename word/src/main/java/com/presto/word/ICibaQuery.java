@@ -22,7 +22,7 @@ public class ICibaQuery {
 
 	public static void main(String[] args) throws Exception {
 		ICibaQuery q = new ICibaQuery();
-		Word query = q.Query("TV");
+		Word query = q.Query("reservior");
 		System.out.println(q.gson.toJson(query));
 		DB db = new DB();
 		// db.insertWord(query);

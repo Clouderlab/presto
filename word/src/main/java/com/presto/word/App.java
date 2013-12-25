@@ -20,7 +20,8 @@ public class App {
 
 		DB db = new DB();
 		Statement stm = db.conn.createStatement();
-		boolean execute = stm.execute("select wid,word from dict");
+		boolean execute = stm
+				.execute("select wid,word from dict where wid>19072");
 		ResultSet rs = stm.getResultSet();
 		ICibaQuery qu = new ICibaQuery();
 		while (rs.next()) {
@@ -28,7 +29,7 @@ public class App {
 			String word = rs.getString(2);
 			System.out.println("getting id:" + id + " word:" + word + "..");
 			Word query = qu.Query(word);
-			
+
 			// 每3秒钟搞一次
 			Thread.sleep(3000);
 			log.append("id:" + id + " word:" + word + " complete" + "\n");
